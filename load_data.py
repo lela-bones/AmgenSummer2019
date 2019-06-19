@@ -1,3 +1,4 @@
+from  myLSTM import *
 from preprocessing import *
 from feat_readers import * 
 import os
@@ -64,4 +65,26 @@ for i in range(len(Y_test)):
     Y[i, :len(Y_test[i])] = Y_test[i]
 Y_test = Y
 
+# putting data into my dataset
+train_data = myDataset(X_train, Y_train)
+test_data = myDataset(X_test, Y_test)
 
+# defining params for the data
+train_params = {'batch_size': 10,
+                'shuffle': True,
+                'num_workers': 6}
+
+test_params = {'batch_size': 10,
+               'shuffle': False,
+               'num_workers': 6}
+
+train_gen = data.DataLoader(train_data, **train_params)
+test_gen = data.DataLoader(test_data, **test_params)
+
+model_params = {'input_size': 128,
+                'hidden_size': 64,
+                'output_size': nb_classes,
+                'batch_size': 400}
+
+# initializing my model of the LSTM
+mymodel = myLSTM(**model_params)
