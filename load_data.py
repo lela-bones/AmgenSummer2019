@@ -97,11 +97,11 @@ mymodel = myLSTM(**hyper_params)
 
 # defining my loss and optimizer 
 criterion = nn.CrossEntropyLoss(ignore_index = -1)
-optimizer = torch.optim.Adam(mymodel.parameters(), lr=.01)
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=.05)
 #device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #defining max epochs
-num_epochs = 5000
+num_epochs = 500
 #saving intermediate information
 losses = []
 counts = []
@@ -127,7 +127,7 @@ for i in range(num_epochs):
         optimizer.step()
         count += 1
 
-        if count %250 == 0:
+        if count %20 == 0:
             mymodel.train(False)
             #calculating accuracy
             correct = 0
@@ -148,7 +148,7 @@ for i in range(num_epochs):
             losses.append(loss)
             counts.append(count)
             accuracies.append(accuracy)
-            if(count % 500 == 0):
+            if(count % 40 == 0):
                 print('Iteration: {} Loss: {} Accuracy {}%'.format(count, loss.item(), accuracy))
 
 torch.save(mymodel.state_dict(), 'nnparams') 
