@@ -78,13 +78,54 @@ test_params = {'batch_size': 10,
                'shuffle': False,
                'num_workers': 6}
 
+# batch generators
 train_gen = data.DataLoader(train_data, **train_params)
 test_gen = data.DataLoader(test_data, **test_params)
 
-model_params = {'input_size': 128,
+hyper_params = {'input_size': 128,
                 'hidden_size': 64,
                 'output_size': nb_classes,
-                'batch_size': 400}
+                'batch_size': 10}
 
 # initializing my model of the LSTM
-mymodel = myLSTM(**model_params)
+mymodel = myLSTM(**hyper_params)
+# defining my loss and optimizer 
+criterion = nn.CrossEntropyLoss(ignore_index = -1)
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=.1)
+#device config
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#defining max epochs
+num_epochs = 5
+#saving intermediate loss
+losses = []
+
+#training model
+for i in range(100):
+    for feats, labels in train_gen:
+        feats = feats.to(device)
+        labels = labels.to(device)
+        
+        #forward pass
+        outputs = mymodel(feats)
+        loss = criterion(outputs, labels)
+
+        #backward optimize
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        losses.append(loss.item())
+
+#test the model
+with torch.no_grad():
+    correct = 0
+    total = 0
+    for feats, labels in test_gen:
+        outputs = mymodel(feats)
+        _, predictions = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predictions==labels).sum().item()
+
+    print('Test accuracy is: {} %'.format(100 * correct/total))
+
+    
+

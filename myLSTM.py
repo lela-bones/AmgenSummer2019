@@ -16,7 +16,7 @@ class myDataset(data.Dataset):
     def __getitem__(self, index):
         'Generate sample of data'
         x = torch.tensor(self.feats[index])
-        y = torch.tensor(self.labels[index])
+        y = torch.tensor(self.labels[index][index])
         return x, y
 
 class myLSTM(nn.Module):
@@ -28,7 +28,7 @@ class myLSTM(nn.Module):
         self.batch_size = batch_size
         
         # Initializing LSTM with size (input_size, hidden_size)
-        self.lstm = nn.LSTM(input_size, hidden_size)
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first = True)
 
         # Initializing output layer with size (hidden_size, output_size)
         self.linear = nn.Linear(self.hidden_size, output_size)
@@ -38,11 +38,11 @@ class myLSTM(nn.Module):
          LSTM inputs are of size (seq_len, batch, input_size)
          lstm_out size (input_size, batch_size, hidden_size)
          self.hidden size (num_layers, batch_size, hidden_size)'''
-        lstm_out, self.hidden = self.lstm(inputs.view(len(inputs), self.batch_size, -1))
+        lstm_out, self.hidden = self.lstm(inputs)
          
         # now only grab output from final set
-        y_pred = self.linear(lstm_out[-1].view(self.batch_size, -1))
-        return y_pred
+        outputs = self.linear(lstm_out[:, -1, :])
+        return outputs
 
 
 
