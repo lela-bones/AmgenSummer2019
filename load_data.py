@@ -3,7 +3,7 @@ from preprocessing import *
 from feat_readers import * 
 import os
 import numpy as np
-
+import matplotlib.pyplot as plt
 # setting the path for the data
 path = '../SpatialCNN_mid/'
 
@@ -65,6 +65,9 @@ for i in range(len(Y_test)):
     Y[i, :len(Y_test[i])] = Y_test[i]
 Y_test = Y
 
+#print(np.array(X_train).shape)
+#print(np.array(Y_train).shape)
+
 # putting data into my dataset
 train_data = myDataset(X_train, Y_train)
 test_data = myDataset(X_test, Y_test)
@@ -89,43 +92,78 @@ hyper_params = {'input_size': 128,
 
 # initializing my model of the LSTM
 mymodel = myLSTM(**hyper_params)
+'''optional for loading'''
+#mymodel.load_state_dict(torch.load('nnparams'))
+
 # defining my loss and optimizer 
 criterion = nn.CrossEntropyLoss(ignore_index = -1)
-optimizer = torch.optim.Adam(mymodel.parameters(), lr=.1)
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=.01)
 #device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #defining max epochs
-num_epochs = 5
-#saving intermediate loss
+num_epochs = 5000
+#saving intermediate information
 losses = []
+counts = []
+accuracies = []
 
+count = 0
 #training model
-for i in range(100):
+for i in range(num_epochs):
     for feats, labels in train_gen:
+        mymodel.train(True)
         feats = feats.to(device)
         labels = labels.to(device)
         
+        #clearing gradient
+        optimizer.zero_grad()
+
         #forward pass
         outputs = mymodel(feats)
         loss = criterion(outputs, labels)
 
         #backward optimize
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        losses.append(loss.item())
+        count += 1
 
-#test the model
-with torch.no_grad():
-    correct = 0
-    total = 0
-    for feats, labels in test_gen:
-        outputs = mymodel(feats)
-        _, predictions = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predictions==labels).sum().item()
+        if count %250 == 0:
+            mymodel.train(False)
+            #calculating accuracy
+            correct = 0
+            total = 0
+            for feats, labels in test_gen:
+                feats = feats.to(device)
+                labels = labels.to(device)
 
-    print('Test accuracy is: {} %'.format(100 * correct/total))
+                #forward pass
+                outputs = mymodel(feats)
+                predicted = torch.max(outputs.data, 1)[1]
 
-    
+                total += labels.size(0)
+                correct += (predicted == labels).sum()
+            accuracy = correct / float(total)
 
+            #storing data
+            losses.append(loss)
+            counts.append(count)
+            accuracies.append(accuracy)
+            if(count % 500 == 0):
+                print('Iteration: {} Loss: {} Accuracy {}%'.format(count, loss.item(), accuracy))
+
+torch.save(mymodel.state_dict(), 'nnparams') 
+
+# visualization loss 
+plt.plot(counts ,losses)
+plt.xlabel("Number of iteration")
+plt.ylabel("Loss")
+plt.title("RNN: Loss vs Number of iteration")
+plt.show()
+
+# visualization accuracy 
+plt.plot(counts ,accuracies,color = "red")
+plt.xlabel("Number of iteration")
+plt.ylabel("Accuracy")
+plt.title("RNN: Accuracy vs Number of iteration")
+plt.savefig('graph.png')
+plt.show()

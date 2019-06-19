@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.utils import data
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class myDataset(data.Dataset):
     'My instantiation of the Dataset class'
     def __init__(self, feats, labels):
@@ -16,7 +18,7 @@ class myDataset(data.Dataset):
     def __getitem__(self, index):
         'Generate sample of data'
         x = torch.tensor(self.feats[index])
-        y = torch.tensor(self.labels[index][index])
+        y = torch.tensor(self.labels[index])
         return x, y
 
 class myLSTM(nn.Module):
@@ -41,8 +43,8 @@ class myLSTM(nn.Module):
         lstm_out, self.hidden = self.lstm(inputs)
          
         # now only grab output from final set
-        outputs = self.linear(lstm_out[:, -1, :])
-        return outputs
+        outputs = self.linear(lstm_out)
+        return outputs.view((self.batch_size, self.output_size, -1))
 
 
 
