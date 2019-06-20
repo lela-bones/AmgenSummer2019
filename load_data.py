@@ -11,7 +11,7 @@ path = '../SpatialCNN_mid/'
 
 # grabbing the different split folders
 splits = os.listdir(path)
-split = 0 #pick split 0-4
+split = 1 #pick split 0-4
 nb_classes = 18
 
 # grabbing the files in that split
