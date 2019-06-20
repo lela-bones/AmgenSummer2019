@@ -4,6 +4,7 @@ from feat_readers import *
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+
 # setting the path for the data
 path = '../SpatialCNN_mid/'
 
@@ -106,10 +107,11 @@ criterion = nn.CrossEntropyLoss(ignore_index = -1)
 optimizer = torch.optim.Adam(mymodel.parameters(), lr=.005)
 
 #defining max epochs
-num_epochs = 500
+num_epochs = 100
 
 #saving intermediate information
 losses = []
+epochs = []
 train_accuracies = []
 #training model
 for i in range(num_epochs):
@@ -130,8 +132,7 @@ for i in range(num_epochs):
 
         #backward optimize
         loss.backward()
-        optimizer.step()
-
+        optimizer.step()	
     mymodel.train(False)
     #calculating accuracy
     for feats, labels in test_gen:
@@ -140,20 +141,23 @@ for i in range(num_epochs):
 
         #forward pass
         outputs = mymodel(feats)
-      
         #use metrics here
-    print('Epoch: {}'.format(i))
+    
+    print('Epoch: {} Loss: {}'.format(i, loss.item()))
     #storing data
+    losses.append(loss)
+    epochs.append(i)
 
 torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1)) 
 
 # visualization loss 
-plt.plot([range(num_epochs)], losses)
+plt.plot(epochs, losses)
 plt.xlabel("Number of iteration")
 plt.ylabel("Loss")
 plt.title("RNN: Loss vs Number of epochs in training")
+plt.savefig('Lossgraph.png')
 plt.show()
-
+'''
 # visualization train accuracy 
 plt.plot([range(num_epochs)], train_accuracies, color = "red")
 plt.xlabel("Number of iteration")
@@ -161,3 +165,4 @@ plt.ylabel("Accuracy")
 plt.title("RNN: Accuracy vs Number of iteration")
 plt.savefig('graph.png')
 plt.show()
+'''
