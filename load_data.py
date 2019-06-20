@@ -1,3 +1,4 @@
+from metrics import *
 from  myLSTM import *
 from preprocessing import *
 from feat_readers import * 
@@ -125,14 +126,17 @@ for i in range(num_epochs):
 
         #forward pass
         outputs = mymodel(feats)
-	#reformatting data to fit into loss
         outputs = outputs.view((batch_size * maxl, -1))
+	#reformatting data to fit into loss
         labels = labels.view(-1)
+        #accuracy = per_frame_accuracy(labels.cpu().data.numpy(), outputs.cpu().data.numpy())
         loss = criterion(outputs, labels)
 
         #backward optimize
         loss.backward()
-        optimizer.step()	
+        optimizer.step()
+
+		
     mymodel.train(False)
     #calculating accuracy
     for feats, labels in test_gen:
@@ -143,13 +147,15 @@ for i in range(num_epochs):
         outputs = mymodel(feats)
         #use metrics here
     
-    print('Epoch: {} Loss: {}'.format(i, loss.item()))
+    print('Epoch: {} Loss: {} Accuracy:'.format(i, loss.item()))
     #storing data
     losses.append(loss.cpu())
     epochs.append(i)
+    #train_accuracies.append(accuracy)
 
 torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1)) 
 np.save('losses', losses)
+#np.save('accuracy', train_accuracies)
 '''
 # visualization loss 
 plt.plot(epochs, losses)
