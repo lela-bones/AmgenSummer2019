@@ -85,6 +85,7 @@ test_params = {'batch_size': 10,
 train_gen = data.DataLoader(train_data, **train_params)
 test_gen = data.DataLoader(test_data, **test_params)
 
+batch_size = 10
 hyper_params = {'input_size': 128,
                 'hidden_size': 64,
                 'output_size': nb_classes,
@@ -97,18 +98,16 @@ mymodel = myLSTM(**hyper_params)
 
 # defining my loss and optimizer 
 criterion = nn.CrossEntropyLoss(ignore_index = -1)
-optimizer = torch.optim.Adam(mymodel.parameters(), lr=.05)
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=.005)
 #device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
-'''
+
 #defining max epochs
 num_epochs = 500
+
 #saving intermediate information
 losses = []
-counts = []
 accuracies = []
-
 count = 0
 #training model
 for i in range(num_epochs):
@@ -116,42 +115,34 @@ for i in range(num_epochs):
         mymodel.train(True)
         feats = feats.to(device)
         labels = labels.to(device)
-        
+             
         #clearing gradient
         optimizer.zero_grad()
 
         #forward pass
         outputs = mymodel(feats)
+        outputs = outputs.view((batch_size * maxl, -1))
+        labels = labels.view(-1)
         loss = criterion(outputs, labels)
 
         #backward optimize
         loss.backward()
         optimizer.step()
-        count += 1
+        count = count + 1
 
-        if count %20 == 0:
-            mymodel.train(False)
-            #calculating accuracy
-            correct = 0
-            total = 0
-            for feats, labels in test_gen:
-                feats = feats.to(device)
-                labels = labels.to(device)
+    mymodel.train(False)
+    #calculating accuracy
+    for feats, labels in test_gen:
+        feats = feats.to(device)
+        labels = labels.to(device)
 
-                #forward pass
-                outputs = mymodel(feats)
-                predicted = torch.max(outputs.data, 1)[1]
+        #forward pass
+        outputs = mymodel(feats)
+        predicted = torch.max(outputs.data, 1)[1]
+        #use metrics here
 
-                total += labels.size(0)
-                correct += (predicted == labels).sum()
-            accuracy = correct / float(total)
-
-            #storing data
-            losses.append(loss)
-            counts.append(count)
-            accuracies.append(accuracy)
-            if(count % 40 == 0):
-                print('Iteration: {} Loss: {} Accuracy {}%'.format(count, loss.item(), accuracy))
+    #storing data
+    print(count)
 
 torch.save(mymodel.state_dict(), 'nnparams') 
 
@@ -169,4 +160,3 @@ plt.ylabel("Accuracy")
 plt.title("RNN: Accuracy vs Number of iteration")
 plt.savefig('graph.png')
 plt.show()
-'''
