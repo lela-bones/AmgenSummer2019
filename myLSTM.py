@@ -6,9 +6,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class myDataset(data.Dataset):
     'My instantiation of the Dataset class'
-    def __init__(self, feats, labels):
+    def __init__(self, feats, weights, labels):
         'Initialiation'
         self.feats = feats
+        self.weights = weights
         self.labels = labels
 
     def __len__(self):
@@ -18,8 +19,9 @@ class myDataset(data.Dataset):
     def __getitem__(self, index):
         'Generate sample of data'
         x = torch.tensor(self.feats[index])
+        w = torch.tensor(self.weights[index])
         y = torch.tensor(self.labels[index])
-        return x, y
+        return x, w, y
 
 class myLSTM(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, batch_size):
