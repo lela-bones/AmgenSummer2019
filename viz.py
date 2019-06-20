@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+losses = np.load('losses.npy', allow_pickle=True)
 # visualization loss 
 plt.plot(losses)
 plt.xlabel("Number of iteration")
