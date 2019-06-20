@@ -1,11 +1,36 @@
 import numpy as np
 from sklearn.metrics import accuracy_score
 from itertools import groupby
-from utils.misc import frame_labels_to_segments
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+def frame_labels_to_segments(labels, start_fr=0):
+    """
+    :param labels: a vector of integers (labels), one per frame
+    :param start_fr: frame index of the first label, labels are assumed to
+    be continuous
+    :return: segments: a list of tuples (segment_st, segment_e)
+             segment_labels: a list of labels, one per segment
+    """
+
+    segment_starts = []
+    segment_ends = []
+    segment_labels = []
+
+    frame_cnt = start_fr
+    for frame_label in labels:
+        if (len(segment_labels) == 0) or (segment_labels[-1] != frame_label):
+            if len(segment_starts) != 0:
+                segment_ends.append(frame_cnt - 1)
+            segment_starts.append(frame_cnt)
+            segment_labels.append(frame_label)
+        frame_cnt += 1
+
+    segment_ends.append(frame_cnt - 1)
+    segments = array(list(zip(segment_starts, segment_ends)))
+    segment_labels = array(segment_labels)
+    return segments, segment_labels
 
 def per_frame_accuracy(y_true, y_pred, sample_weights=None,
                        average_across_seq=True):
