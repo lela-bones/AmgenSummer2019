@@ -49,8 +49,8 @@ for i in range(len(X_test)):
 #print(minl, maxl)
 
 # padding all of the data
-X_train, x_mask = pad_sequences(X_train, maxl)
-X_test, x_mask = pad_sequences(X_test, maxl)
+X_train, x_train_mask = pad_sequences(X_train, maxl)
+X_test, x_test_mask = pad_sequences(X_test, maxl)
 
 # starting with all -1 for all 128 features
 Y = np.repeat(-1, maxl)
@@ -75,11 +75,11 @@ test_data = myDataset(X_test, Y_test)
 # defining params for the data
 train_params = {'batch_size': 10,
                 'shuffle': True,
-                'num_workers': 6}
+                'num_workers': 0}
 
 test_params = {'batch_size': 10,
                'shuffle': False,
-               'num_workers': 6}
+               'num_workers': 0}
 
 # batch generators
 train_gen = data.DataLoader(train_data, **train_params)
@@ -91,24 +91,26 @@ hyper_params = {'input_size': 128,
                 'output_size': nb_classes,
                 'batch_size': 10}
 
+#device config
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # initializing my model of the LSTM
 mymodel = myLSTM(**hyper_params)
+mymmodel = mymodel.to(device)
+
 '''optional for loading'''
 #mymodel.load_state_dict(torch.load('nnparams'))
 
 # defining my loss and optimizer 
 criterion = nn.CrossEntropyLoss(ignore_index = -1)
 optimizer = torch.optim.Adam(mymodel.parameters(), lr=.005)
-#device config
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #defining max epochs
 num_epochs = 500
 
 #saving intermediate information
 losses = []
-accuracies = []
-count = 0
+train_accuracies = []
 #training model
 for i in range(num_epochs):
     for feats, labels in train_gen:
@@ -121,6 +123,7 @@ for i in range(num_epochs):
 
         #forward pass
         outputs = mymodel(feats)
+	#reformatting data to fit into loss
         outputs = outputs.view((batch_size * maxl, -1))
         labels = labels.view(-1)
         loss = criterion(outputs, labels)
@@ -128,7 +131,6 @@ for i in range(num_epochs):
         #backward optimize
         loss.backward()
         optimizer.step()
-        count = count + 1
 
     mymodel.train(False)
     #calculating accuracy
@@ -138,23 +140,22 @@ for i in range(num_epochs):
 
         #forward pass
         outputs = mymodel(feats)
-        predicted = torch.max(outputs.data, 1)[1]
+      
         #use metrics here
-
+    print('Epoch: {}'.format(i))
     #storing data
-    print(count)
 
-torch.save(mymodel.state_dict(), 'nnparams') 
+torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1)) 
 
 # visualization loss 
-plt.plot(counts ,losses)
+plt.plot([range(num_epochs)], losses)
 plt.xlabel("Number of iteration")
 plt.ylabel("Loss")
-plt.title("RNN: Loss vs Number of iteration")
+plt.title("RNN: Loss vs Number of epochs in training")
 plt.show()
 
-# visualization accuracy 
-plt.plot(counts ,accuracies,color = "red")
+# visualization train accuracy 
+plt.plot([range(num_epochs)], train_accuracies, color = "red")
 plt.xlabel("Number of iteration")
 plt.ylabel("Accuracy")
 plt.title("RNN: Accuracy vs Number of iteration")
