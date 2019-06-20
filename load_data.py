@@ -145,7 +145,7 @@ for i in range(num_epochs):
     
     print('Epoch: {} Loss: {}'.format(i, loss.item()))
     #storing data
-    losses.append(loss)
+    losses.append(loss.cpu())
     epochs.append(i)
 
 torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1)) 
