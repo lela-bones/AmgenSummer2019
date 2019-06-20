@@ -149,7 +149,8 @@ for i in range(num_epochs):
     epochs.append(i)
 
 torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1)) 
-
+np.save('losses', losses)
+'''
 # visualization loss 
 plt.plot(epochs, losses)
 plt.xlabel("Number of iteration")
@@ -157,6 +158,7 @@ plt.ylabel("Loss")
 plt.title("RNN: Loss vs Number of epochs in training")
 plt.savefig('Lossgraph.png')
 plt.show()
+'''
 '''
 # visualization train accuracy 
 plt.plot([range(num_epochs)], train_accuracies, color = "red")
