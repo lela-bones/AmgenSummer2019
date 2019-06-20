@@ -44,10 +44,7 @@ class myLSTM(nn.Module):
          
         # now only grab output from final set
         outputs = self.linear(lstm_out)
-        return outputs.view((self.batch_size, self.output_size, -1))
+        return outputs
 
-
-
-
-        
-
+def one_hot(num, nb_classes):
+    data = np.zeros(nb_classes)

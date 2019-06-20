@@ -16,8 +16,8 @@ nb_classes = 18
 file_feats = os.listdir(path + '{}'.format(splits[split]))
 
 # defining the train and test files
-train_files = np.loadtxt('train.txt', dtype = str)
-test_files = np.loadtxt('test.txt', dtype = str)
+train_files = np.loadtxt(path +'{}/train.txt'.format(splits[split]), dtype = str)
+test_files = np.loadtxt(path + '{}/test.txt'.format(splits[split]), dtype = str)
 
 # creating instance of feat read class
 feats = LeaSpatialCNNFeatReader()
@@ -100,6 +100,8 @@ criterion = nn.CrossEntropyLoss(ignore_index = -1)
 optimizer = torch.optim.Adam(mymodel.parameters(), lr=.05)
 #device config
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
+'''
 #defining max epochs
 num_epochs = 500
 #saving intermediate information
@@ -167,3 +169,4 @@ plt.ylabel("Accuracy")
 plt.title("RNN: Accuracy vs Number of iteration")
 plt.savefig('graph.png')
 plt.show()
+'''
