@@ -15,10 +15,10 @@ plt.savefig('Results/Lossgraph.png')
 plt.show()
 
 # visualization training accuracy
-plt.plot(test)
+plt.plot(train)
 plt.xlabel("Number of iteration")
-plt.ylabel("Test Accuracy")
-plt.title("RNN: Test Accuracy vs Number of epochs in training")
+plt.ylabel("Train Accuracy")
+plt.title("RNN: Train Accuracy vs Number of epochs in training")
 plt.savefig('Results/TrainAccuracy.png')
 plt.show()
 
