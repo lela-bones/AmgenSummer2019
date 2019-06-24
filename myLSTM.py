@@ -49,4 +49,4 @@ class myLSTM(nn.Module):
         return outputs
 
 def one_hot(num, nb_classes):
-    data = np.zeros(nb_classes)
+	data = np.zeros(nb_classes)
