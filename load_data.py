@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import pdb
 
 # setting the path for the data
-splits_path = '/cis/project/diva/dataset/50Salads/lea_splits/'
-feat_path = '/cis/project/diva/dataset/50Salads/SpatialCNN_feat/SpatialCNN_mid/'
-
+#splits_path = '/cis/project/diva/dataset/50Salads/lea_splits/'
+#feat_path = '/cis/project/diva/dataset/50Salads/SpatialCNN_feat/SpatialCNN_mid/'
+splits_path ='../SpatialCNN_mid/'
 # grabbing the different split folders
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
-print(splits)
-split = 2 #pick split 0-4
+#print(splits)
+split = 0 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
@@ -34,13 +34,13 @@ Y_test = []
 
 # loading train data
 for files in train_files:
-    X_train.append(feats.read_feat(feat_path + '{}/rgb-{}.avi.mat'.format(splits[split], files)))
-    Y_train.append(feats.read_labels(feat_path + '{}/rgb-{}.avi.mat'.format(splits[split], files), nb_classes))
+    X_train.append(feats.read_feat(splits_path + '{}/rgb-{}.avi.mat'.format(splits[split], files)))
+    Y_train.append(feats.read_labels(splits_path + '{}/rgb-{}.avi.mat'.format(splits[split], files), nb_classes))
 
 # loading test data
 for files in test_files:
-    X_test.append(feats.read_feat(feat_path + '{}/rgb-{}.avi.mat'.format(splits[split], files)))
-    Y_test.append(feats.read_labels(feat_path + '{}/rgb-{}.avi.mat'.format(splits[split], files), nb_classes))
+    X_test.append(feats.read_feat(splits_path + '{}/rgb-{}.avi.mat'.format(splits[split], files)))
+    Y_test.append(feats.read_labels(splits_path + '{}/rgb-{}.avi.mat'.format(splits[split], files), nb_classes))
 
 # find the min and max video length
 minl = 100000000
@@ -68,17 +68,17 @@ Y = np.tile(Y, (len(Y_train), 1))
 for i in range(len(Y_train)):
     Y[i, :len(Y_train[i])] = Y_train[i]
 Y_train = Y
-print(Y_train)
+#print(Y_train)
 
 Y = np.repeat(-1, maxl)
 Y = np.tile(Y, (len(Y_test), 1))
 for i in range(len(Y_test)):
     Y[i, :len(Y_test[i])] = Y_test[i]
 Y_test = Y
-print(Y_test)
-print(Y_train)
-print(np.array(X_train).shape)
-print(np.array(Y_train).shape)
+#print(Y_test)
+#print(Y_train)
+#print(np.array(X_train).shape)
+#print(np.array(Y_train).shape)
 
 
 # putting data into my dataset
@@ -119,12 +119,13 @@ criterion = nn.CrossEntropyLoss(ignore_index = -1)
 optimizer = torch.optim.Adam(mymodel.parameters(), lr=.005)
 
 #defining max epochs
-num_epochs = 10
+num_epochs = 100
 
 #saving intermediate information
 losses = []
 epochs = []
 train_accuracies = []
+test_accuracies = []
 #training model
 for i in range(num_epochs):
     mymodel.train(True)
@@ -142,7 +143,7 @@ for i in range(num_epochs):
         weights = weights.view(-1)
         labels = labels.view(-1)
         pred = torch.max(outputs, 1)[1]
-        accuracy = per_frame_accuracy(labels.cpu().data.numpy(), pred.cpu().data.numpy(), weights)
+        train_accuracy = per_frame_accuracy(labels.cpu().data.numpy(), pred.cpu().data.numpy(), weights)
         loss = criterion(outputs, labels)
 
         #backward optimize
@@ -151,34 +152,36 @@ for i in range(num_epochs):
 
         del outputs, weights, labels, pred, feats
 
-  #  mymodel.train(False)
-  #  #calculating accuracy
-  #  for feats, weights, labels in test_gen:
-  #      feats = feats.to(device)
-  #      labels = labels.to(device)
+    mymodel.train(False)
+    #calculating accuracy
+    for feats, weights, labels in test_gen:
+        feats = feats.to(device)
+        labels = labels.to(device)
 
         #forward pass
-  #      outputs = mymodel(feats)
+        outputs = mymodel(feats)
 
         #reformatting data to fit into loss
         #outputs = outputs.view((batch_size * maxl, -1))
         #weights = weights.view(-1)
         #labels = labels.view(-1)
-  #      pred = torch.max(outputs, -1)[1]
+        pred = torch.max(outputs, -1)[1]
   #      print(pred)
   #      print(labels)
   #      pdb.set_trace()
 	#use metrics here
-  #      test_accuracy = per_frame_accuracy(labels.cpu().data.numpy(), pred.cpu().data.numpy(), weights)
-    print('Epoch: {} Loss: {} Accuracy: {}'.format(i, loss.item(), accuracy))
+        test_accuracy = per_frame_accuracy(labels.cpu().data.numpy(), pred.cpu().data.numpy(), weights)
+    print('Epoch: {} Loss: {} Train Accuracy: {} Test Accuracy: {}'.format(i, loss.item(), train_accuracy, test_accuracy))
     #storing data
     losses.append(loss.cpu())
-    epochs.append(i)
+    train_accuracies.append(train_accuracy)
+    test_accuracies.append(test_accuracy)
     #train_accuracies.append(accuracy)
 
 torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1))
 np.save('losses', losses)
-#np.save('accuracy', train_accuracies)
+np.save('trainaccuracy', train_accuracies)
+np.save('testaccuracy', test_accuracies)
 '''
 # visualization loss
 plt.plot(epochs, losses)
@@ -196,7 +199,7 @@ plt.ylabel("Accuracy")
 plt.title("RNN: Accuracy vs Number of iteration")
 plt.savefig('graph.png')
 plt.show()
-'''
+
 with torch.no_grad():
     for feats, weights, labels in test_gen:
         feats = feats.to(device)
@@ -207,4 +210,4 @@ with torch.no_grad():
         #use metrics here
         test_accuracy = per_frame_accuracy(labels.cpu().data.numpy(), pred.cpu().data.numpy(), weights)
         print(test_accuracy)
-
+'''
