@@ -3,5 +3,3 @@
 *.so
 *.p
 *.o
-*params
-*.npy
