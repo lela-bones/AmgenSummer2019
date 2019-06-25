@@ -15,7 +15,7 @@ splits_path ='../SpatialCNN_mid/'
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
 #print(splits)
-split = 4 #pick split 0-4
+split = 2 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
@@ -54,8 +54,7 @@ for i in range(len(X_train)):
 #print(minl, maxl)
 
 # padding all of the data
-# TODO: get this from training/testing data
-maxl = 1655
+#maxl = 1655
 X_train, x_train_mask = pad_sequences(X_train, maxl)
 X_test, x_test_mask = pad_sequences(X_test, maxl)
 
