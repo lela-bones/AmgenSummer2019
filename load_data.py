@@ -15,7 +15,7 @@ splits_path ='../SpatialCNN_mid/'
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
 #print(splits)
-split = 0 #pick split 0-4
+split = 1 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
@@ -43,18 +43,18 @@ for files in test_files:
     Y_test.append(feats.read_labels(splits_path + '{}/rgb-{}.avi.mat'.format(splits[split], files), nb_classes))
 
 # find the min and max video length
-minl = 100000000
-maxl = 0
-for i in range(len(X_test)):
-    temp = len(X_test[i])
-    if(temp < minl):
-        minl = temp
-    if(temp > maxl):
-        maxl = temp
+#minl = 100000000
+#maxl = 0
+#for i in range(len(X_test)):
+#    temp = len(X_test[i])
+#    if(temp < minl):
+#        minl = temp
+#    if(temp > maxl):
+#        maxl = temp
 #print(minl, maxl)
 
 # padding all of the data
-#maxl = 1655
+maxl = 1655
 X_train, x_train_mask = pad_sequences(X_train, maxl)
 X_test, x_test_mask = pad_sequences(X_test, maxl)
 
