@@ -15,7 +15,7 @@ splits_path ='../SpatialCNN_mid/'
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
 #print(splits)
-split = 4 #pick split 0-4
+split = 0 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
@@ -84,7 +84,7 @@ Y_test = Y
 train_data = myDataset(X_train, x_train_mask, Y_train)
 test_data = myDataset(X_test, x_test_mask, Y_test)
 
-batch_size = 5
+batch_size = 10
 
 # defining params for the data
 train_params = {'batch_size': batch_size,
@@ -116,7 +116,7 @@ mymmodel = mymodel.to(device)
 
 # defining my loss and optimizer
 criterion = nn.CrossEntropyLoss(ignore_index = -1)
-optimizer = torch.optim.Adam(mymodel.parameters(), lr=.005)
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=.001)
 
 #defining max epochs
 num_epochs = 100
