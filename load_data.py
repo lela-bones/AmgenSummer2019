@@ -15,7 +15,7 @@ splits_path ='../SpatialCNN_mid/'
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
 #print(splits)
-split = 3 #pick split 0-4
+split = 0 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
@@ -45,8 +45,8 @@ for files in test_files:
 # find the min and max video length
 minl = 100000000
 maxl = 0
-for i in range(len(X_train)):
-    temp = len(X_train[i])
+for i in range(len(X_test)):
+    temp = len(X_test[i])
     if(temp < minl):
         minl = temp
     if(temp > maxl):
@@ -84,12 +84,14 @@ Y_test = Y
 train_data = myDataset(X_train, x_train_mask, Y_train)
 test_data = myDataset(X_test, x_test_mask, Y_test)
 
+batch_size = 5
+
 # defining params for the data
-train_params = {'batch_size': 10,
+train_params = {'batch_size': batch_size,
                 'shuffle': True,
                 'num_workers': 0}
 
-test_params = {'batch_size': 10,
+test_params = {'batch_size': batch_size,
                'shuffle': False,
                'num_workers': 0}
 
@@ -97,7 +99,6 @@ test_params = {'batch_size': 10,
 train_gen = data.DataLoader(train_data, **train_params)
 test_gen = data.DataLoader(test_data, **test_params)
 
-batch_size = 10
 hyper_params = {'input_size': 128,
                 'hidden_size': 64,
                 'output_size': nb_classes,
