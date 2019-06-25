@@ -15,7 +15,7 @@ splits_path ='../SpatialCNN_mid/'
 # Make sure they are sorted
 splits = sorted(os.listdir(splits_path))
 #print(splits)
-split = 2 #pick split 0-4
+split = 3 #pick split 0-4
 nb_classes = 18
 
 # defining the train and test files
