@@ -182,6 +182,8 @@ torch.save(mymodel.state_dict(), 'split{}nnparams'.format(split+1))
 np.save('losses', losses)
 np.save('trainaccuracy', train_accuracies)
 np.save('testaccuracy', test_accuracies)
+plt.imshow(labels)
+plt.imshow(pred)
 '''
 # visualization loss
 plt.plot(epochs, losses)
