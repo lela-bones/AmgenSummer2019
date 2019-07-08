@@ -32,10 +32,10 @@ class myLSTM(nn.Module):
         self.batch_size = batch_size
         
         # Initializing LSTM with size (input_size, hidden_size)
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first = True)
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first = True, bidirectional = True)
 
         # Initializing output layer with size (hidden_size, output_size)
-        self.linear = nn.Linear(self.hidden_size, output_size)
+        self.linear = nn.Linear(self.hidden_size *2, output_size)
 
     def forward(self, inputs):
         '''Forward pass through the LSTM layer 
@@ -46,6 +46,7 @@ class myLSTM(nn.Module):
          
         # now only grab output from final set
         outputs = self.linear(lstm_out)
+        #outputs = nn.functional.dropout(outputs, p=.2)
         return outputs
 
 def one_hot(num, nb_classes):
