@@ -1,90 +1,136 @@
-from scipy.io import loadmat
 import numpy as np
+import statistics
+import math
 import torch
 import pandas as pd
+from torch.utils.data import DataLoader
+from  DataLoading import *
+from Preprocessing import *
+from SiameseNetwork import *
 
-#location of data
-filepath = '/cis/project/vision_sequences/dance_sequences/dance_imitation/'
+#trial = 3 # trial 0-3
+#kid = 24  # kids from 0-44
+#move = 0  # moves from 0-17 or 0-13
+#seq = 1 #Sequence 1 or 3
 
-#files containing specific data
-sequences = 'Data_sequences.mat'
-moveTypes = 'MoveTypeFrames.mat'
-scores = 'Score_per_movetype.mat'
+mask_testGold = np.load('../../dance_results/mask_testGold.npy')
+#mask_testChild = np.load('../../dance_results/mask_testChild.npy')
+#mask_trainChild  = np.load('../../dance_results/mask_trainChild.npy')
+mask_trainGold = np.load('../../dance_results/mask_trainGold.npy')
+testChild = np.load('../../dance_results/padded_testChild.npy')
+testGold = np.load('../../dance_results/padded_testGold.npy')
+trainChild = np.load('../../dance_results/padded_trainChild.npy')
+trainGold = np.load('../../dance_results/padded_trainGold.npy')
+trainScores = np.load('../../dance_results/trainScores.npy')
+testScores = np.load('../../dance_results/testScores.npy')
 
-#loading in the mat files
-sequence_data = loadmat(filepath+sequences)
-move_data = loadmat(filepath+moveTypes)
-score_data = loadmat(filepath+scores)
+#revtestChild = np.flip(testChild, 1)
+#newtestChild = np.concatenate((testChild, revtestChild))
 
-trial = 0 # trial 0-3
-kid = 1 # kids from 0-44
-move = 0 # moves from 0-17 or 0-13
-seq = 1 #Sequence 1 or 3
+#revtestGold = np.flip(testGold, 1)
+#newtestGold = np.concatenate((testGold, revtestGold))
 
-def read_scores(trial):
-	''' Accepts a trial 0: PT, 1: Test, 2: PT1, 3: TR60 
-	    and returns a dataframe of that data 
-            df.loc[kidID] is how to search it       '''
-	
-	df_scores = pd.DataFrame(score_data['Data'].flat[trial])
-	return df_scores
+#revtrainChild = np.flip(trainChild, 1)
+#newtrainChild = np.concatenate((trainChild, revtrainChild))
 
-def read_gold_seq(trial):
-	''' Accepts the trial 0: PT, 1: Test, 2: PT1. 3: TR60
-	    and returns a dataframe of the data 
-            searchable by frame df.loc[start:end] '''
+#revtrainGold = np.flip(trainGold, 1)
+#newtrainGold = np.concatenate((trainGold, revtrainGold))
 
-	df_gold_seq = pd.DataFrame(sequence_data['Gold'][0][0][trial])
-	return df_gold_seq
+#revmask_trainGold = np.flip(mask_trainGold, 1)
+#newtrainGold = np.concatenate((mask_trainGold, revmask_trainGold))
 
-def read_kid_sequence(kid, trial):
-	df_kid_seq = pd.DataFrame(sequence_data['Kids'][kid][trial])
-	return df_kid_seq
+#revmask_testGold = np.flip(mask_testGold, 1)
+#newtestGold = np.concatenate((mask_testGold, revmask_testGold))
 
-def read_sequences(kid, trial):
-	''' Given the kid and the trial 
-	this function will return the 
-	correctly aligned kid, with the 
-	correctly aligned adult data '''
+#revtestScores = np.flip(testScores, 0)
+#revtrainScores = np.flip(trainScores, 0)
+#newtestScores = np.concatenate((testScores, revtestScores))
+#newtrainScores = np.concatenate((trainScores, revtrainScores))
 
-	gold_seq = read_gold_seq(trial)
-	kid_seq = read_kid_sequence(kid, trial)
-	gold_index = sequence_data['IY'][kid][trial].reshape(-1)
-	gold_index = gold_index - 1
-	kid_index = sequence_data['IX'][kid][trial].reshape(-1)
-	kid_index = kid_index - 1
-	return gold_seq.loc[gold_index], kid_seq.loc[kid_index]
 
-print(read_gold_seq(0))
+#train_data = myDataset(newtrainChild, newtrainGold, newmask_trainGold, newtrainScores)
+#test_data = myDataset(newtestChild, newtestGold, newmask_testGold, newtestScores)
 
-''' this grabs the aligned kid and adult '''
-print(read_sequences(kid, trial))
+train_data = myDataset(trainChild, trainGold, mask_trainGold, trainScores)
+test_data = myDataset(testChild, testGold, mask_testGold, testScores)
 
-''' Gets the speed of the video for the trial '''
-#print(sequence_data['speed'])
+###################
+# Hyper Parameters#
+###################
+batch_size = 25
+hidden_size = 64
+lr_rate = .001
 
-''' Gets the sequence supposed to be used for the trial '''
-#print(sequence_data['seq'])
+# train and testing parameters for batching
+train_params = {'batch_size': batch_size,
+		'shuffle': True,
+		'num_workers': 0}
+test_params = {'batch_size': batch_size,
+		'shuffle': False,
+		'num_workers': 0}
 
-''' Use dataframe.drop[_, _, _] to get rid of the test date '''
-''' use df.loc[_, _, _] to select the test data '''
+#batch generators
+train_gen = DataLoader(train_data, **train_params)
+test_gen = DataLoader(test_data, **test_params)
 
-''' Finds the id number given the kid index number: use with the pid data'''
-#test = df_PT_scores[0][(df_PT_scores[0] == kid)]
-#print(test)
+hyper_params = {'input_size': 60,
+		'hidden_size': hidden_size,
+		'batch_size': batch_size}
 
-''' Grabs beginning and end grame for the sequence and move type '''
-def read_moves(kid, trial, seq, move):
-	''' Picks the aligned gold move and seq with the kids '''
-	move_frames = move_data['MoveTypeFrames_seq{}'.format(seq)][move]
-	gold, kid = read_sequences(kid, trial)
-	newGold = gold[gold[0].between(move_frames[0], move_frames[1], inclusive = True)]
-	# grab indexes of gold start and end frames and grab kid from that
-	#newKid = kid[kid[0].between(move_frames[0], move_frames[1], inclusive = True)]
-	return newGold, newKid
+#device configuration
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-#gold, kid = read_moves(kid, trial, seq, move)
-#print(gold.head())
-#print(kid.head())
+#intializing my model of Siamese NN
+mymodel = mySiameseNetwork(**hyper_params)
+mymodel = mymodel.to(device)
 
-# be able to find which kids dont have scores and not include them, per trial 
+# defining metric loss and optimizer
+criterion = myContrastiveLoss()
+#criterion = myBasicLoss()
+optimizer = torch.optim.Adam(mymodel.parameters(), lr=lr_rate)
+
+num_epochs = 50
+
+#saving intermediate infromation
+losses = []
+train_accuracies = []
+test_accuracies = []
+
+for i in range(num_epochs):
+	mymodel.train(True)
+	for child, gold, weights, scores in train_gen:
+		child = child.to(device)
+		gold = gold.to(device)
+		scores = scores.to(device)
+		#clearing gradients
+		optimizer.zero_grad()
+		#forward pass
+		output1, output2= mymodel(child, gold)
+		output1 = torch.stack([output1[j, w-1, :] for j, w in enumerate(weights)])
+		output2 = torch.stack([output2[j, w-1, :] for j, w in enumerate(weights)])
+		# Use the weight matrix
+		loss, y_pred = criterion(output1, output2, scores)
+		acc = newaccuracy(y_pred, scores)
+		loss.backward()
+		optimizer.step()
+	print(y_pred.t(), scores)	
+	mymodel.train(False)
+	for child, gold, weights, scores in train_gen:
+		child = child.to(device)
+		gold = gold.to(device)
+		scores = scores.to(device)
+		output1, output2 = mymodel(child, gold)
+		output1 = torch.stack([output1[j, w-1, :] for j, w in enumerate(weights)])
+		output2 = torch.stack([output2[j, w-1, :] for j, w in enumerate(weights)])
+		loss, y_pred = criterion(output1, output2, scores)
+		test_acc = newaccuracy(y_pred, scores)
+
+	print("Epoch number {}\n Current loss {}\n Current accuracy {}\n Test accuracy {}".format(i+1, loss.item(), acc, test_acc))
+	train_accuracies.append(acc)
+	losses.append(loss.item())
+	test_accuracies.append(test_acc)
+test = 1
+np.save('../../dance_results/losses{}'.format(test), losses)	
+np.save('../../dance_results/acc{}'.format(test), train_accuracies)
+np.save('../../dance_results/testacc{}'.format(test), test_accuracies)
+torch.save(mymodel.state_dict(), 'noAugmentDataSNN{}'.format(test))
